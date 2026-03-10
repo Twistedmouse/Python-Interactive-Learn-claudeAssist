@@ -396,13 +396,6 @@ This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file
 
 ---
 
-## 📧 Questions?
-
-- **Report Issues:** GitHub Issues tab
-- **Email:** [Your Email]
-- **Twitter:** [@YourHandle]
-
----
 
 ## 🌟 Show Your Support
 
