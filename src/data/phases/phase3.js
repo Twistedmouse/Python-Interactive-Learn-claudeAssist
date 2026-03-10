@@ -68,7 +68,7 @@ print(message.content[0].text)
 1. Visit https://platform.openai.com/api-keys
 2. Sign up or login
 3. Create new secret key
-4. Get \$5 free credit
+4. Get $5 free credit
 
 **Anthropic:**
 1. Visit https://console.anthropic.com/
@@ -1352,9 +1352,9 @@ def search_database(query: str) -> str:
     """Search product database"""
     # Simulate search
     products = {
-        "laptop": "MacBook Pro - \$1999",
-        "phone": "iPhone 14 - \$999",
-        "tablet": "iPad - \$599"
+        "laptop": "MacBook Pro - $1999",
+        "phone": "iPhone 14 - $999",
+        "tablet": "iPad - $599"
     }
     return products.get(query.lower(), "Not found")
 

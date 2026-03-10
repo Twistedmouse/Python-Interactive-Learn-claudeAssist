@@ -1607,9 +1607,9 @@ mystdout.getvalue()
                 { 
                   icon: "🚀", 
                   title: "Railway", 
-                  desc: "Modern alternative to Heroku. Deploy Python apps with one click. Free tier includes \$5/month credits", 
+                  desc: "Modern alternative to Heroku. Deploy Python apps with one click. Free tier includes $5/month credits", 
                   link: "https://railway.app/", 
-                  free: "\$5/month free credits"
+                  free: "$5/month free credits"
                 },
                 { 
                   icon: "🎨", 
@@ -1637,7 +1637,7 @@ mystdout.getvalue()
                   title: "Heroku", 
                   desc: "Deploy apps with Git push. Previously free, now requires paid plan but worth learning the process", 
                   link: "https://www.heroku.com/", 
-                  free: "Paid plans start at \$7/month"
+                  free: "Paid plans start at $7/month"
                 },
                 { 
                   icon: "☁️", 
@@ -1649,9 +1649,9 @@ mystdout.getvalue()
                 { 
                   icon: "🐧", 
                   title: "DigitalOcean", 
-                  desc: "VPS hosting with great documentation. Droplets from \$4/month. Free \$200 trial for students", 
+                  desc: "VPS hosting with great documentation. Droplets from $4/month. Free $200 trial for students", 
                   link: "https://www.digitalocean.com/", 
-                  free: "\$200/month free for students"
+                  free: "$200/month free for students"
                 }
               ].map((host, i) => (
                 <a

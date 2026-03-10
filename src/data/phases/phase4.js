@@ -348,7 +348,7 @@ st.plotly_chart(fig)
 col1, col2, col3 = st.columns(3)
 col1.metric("Users", 1234)
 col2.metric("Growth", "+5%")
-col3.metric("Revenue", "\$5000")
+col3.metric("Revenue", "$5000")
 \`\`\`
 
 ### Step 5: Deploy
@@ -1211,7 +1211,7 @@ Deploy your application to the cloud and make it accessible to the world!
 pip freeze > requirements.txt
 
 # 2. Add Procfile (for Heroku)
-echo "web: uvicorn main:app --host 0.0.0.0 --port \$PORT" > Procfile
+echo "web: uvicorn main:app --host 0.0.0.0 --port $PORT" > Procfile
 
 # 3. Push to GitHub
 git add .
@@ -1316,7 +1316,7 @@ brew install heroku
 
 **Step 2: Create Procfile**
 \`\`\`
-web: uvicorn main:app --host 0.0.0.0 --port \$PORT
+web: uvicorn main:app --host 0.0.0.0 --port $PORT
 \`\`\`
 
 **Step 3: Login**
