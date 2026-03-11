@@ -1,6 +1,3 @@
-// Import new topic
-import { llmsVsSlms } from './llmsVsSlms.js';
-
 export const phase3 = {
   id: 3,
   title: "AI & LLM Fundamentals",
