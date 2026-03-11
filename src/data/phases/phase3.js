@@ -1,3 +1,6 @@
+// Import new topic
+import { llmsVsSlms } from './llmsVsSlms.js';
+
 export const phase3 = {
   id: 3,
   title: "AI & LLM Fundamentals",
@@ -1412,7 +1415,8 @@ print(f"- Memory: {agent_components['Memory']}")`,
         { name: "Agent Patterns", url: "https://github.com/langchain-ai/langchain/tree/master/templates" }
       ],
       expectedOutput: "Agent Components:\n- LLM: Makes decisions and reasoning\n- Tools: search, calculate, send_email\n- Memory: Conversation history"
-    }
+    },
+    llmsVsSlms
   ],
   project: { title: "AI Assistant", desc: "Build an AI-powered assistant with LLMs and tools" }
 };

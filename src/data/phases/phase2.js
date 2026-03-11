@@ -1,3 +1,7 @@
+// Import new topics
+import { typeHintsAndPydantic } from './typeHintsAndPydantic.js';
+import { packageOrganization } from './packageOrganization.js';
+
 export const phase2 = {
   id: 2,
   title: "Intermediate Python",
@@ -914,7 +918,9 @@ print("4. Practice Git CLI locally")`,
         { name: "Git for Beginners Video", url: "https://www.youtube.com/watch?v=RGOj5yH7evk" }
       ],
       expectedOutput: "✓ Git tracks changes over time\n✓ Branches allow parallel development\n✓ Commits create a history\n\nNext steps:\n1. Create GitHub account\n2. Create repository\n3. Add files via web interface\n4. Practice Git CLI locally"
-    }
+    },
+    typeHintsAndPydantic,
+    packageOrganization
   ],
   project: { title: "API Data Tool", desc: "Build a tool that fetches and processes API data" }
 };

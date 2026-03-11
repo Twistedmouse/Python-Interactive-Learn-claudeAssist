@@ -1,6 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { phases } from '../data/phases/index.js';
 
+// Markdown rendering
+const renderMarkdown = (text) => {
+  if (!text) return '';
+  
+  // Bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Italic
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Code blocks (triple backticks)
+  text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    return `<pre style="background: #1e2d45; padding: 16px; border-radius: 8px; overflow-x: auto; color: #00d4aa; font-size: 12px; line-height: 1.5;"><code>${code.trim()}</code></pre>`;
+  });
+  
+  // Inline code
+  text = text.replace(/`([^`]+)`/g, '<code style="background: #1e2d45; padding: 2px 6px; border-radius: 4px; color: #00d4aa; font-size: 13px;">$1</code>');
+  
+  // Headers (##, ###, ####)
+  text = text.replace(/#### (.*?)\n/g, '<h5 style="margin: 12px 0 8px 0; font-size: 14px; font-weight: 700;">$1</h5>');
+  text = text.replace(/### (.*?)\n/g, '<h4 style="margin: 14px 0 10px 0; font-size: 16px; font-weight: 700;">$1</h4>');
+  text = text.replace(/## (.*?)\n/g, '<h3 style="margin: 16px 0 12px 0; font-size: 18px; font-weight: 700;">$1</h3>');
+  
+  // Lists
+  text = text.replace(/- (.*?)\n/g, '<li style="margin-left: 24px; margin-bottom: 6px;">$1</li>');
+  text = text.replace(/(<li.*?<\/li>)/s, '<ul style="list-style: none; padding: 0; margin: 8px 0;">$1</ul>');
+  
+  // Paragraphs and line breaks
+  text = text.replace(/\n\n/g, '</p><p style="margin: 12px 0; line-height: 1.6;">');
+  text = `<p style="margin: 12px 0; line-height: 1.6;">${text}</p>`;
+  
+  return text;
+};
+
 // Custom scrollbar styles
 const scrollbarStyles = `
   .instructions-scrollbar::-webkit-scrollbar {
@@ -221,7 +255,12 @@ const quizData = {
   "4-3": [{ question: "What are environment variables?", options: ["Global variables", "System configuration settings", "Code variables", "Database fields"], correct: 1 }, { question: "Why not hardcode API keys?", options: ["Slower", "Security risk if code exposed", "Not possible", "Harder to read"], correct: 1 }, { question: "What is a .env file?", options: ["Environment config file", "Executable", "Library", "Source code"], correct: 0 }, { question: "How do you access env vars in Python?", options: ["env.API_KEY", "os.getenv('API_KEY')", "$API_KEY", "%API_KEY%"], correct: 1 }, { question: "Should .env be committed to Git?", options: ["Yes", "No, it contains secrets", "Only in production", "Only locally"], correct: 1 }],
   "4-4": [{ question: "What is logging?", options: ["Recording data", "Tracking application events", "User tracking", "Traffic recording"], correct: 1 }, { question: "What log levels exist in Python?", options: ["Only error", "DEBUG, INFO, WARNING, ERROR, CRITICAL", "Just info and error", "Custom only"], correct: 1 }, { question: "Why monitor applications?", options: ["Track users", "Detect issues, track performance", "Log access", "Improve UI"], correct: 1 }, { question: "What is an error log?", options: ["Bug list", "Record of errors and failures", "User complaints", "Code issues"], correct: 1 }, { question: "What tools are used for monitoring?", options: ["Just logging", "Datadog, New Relic, Prometheus, etc", "Only built-in", "Manual checking"], correct: 1 }],
   "4-5": [{ question: "What should a README contain?", options: ["Anything", "Description, setup, usage, contributing", "Just title", "Installation only"], correct: 1 }, { question: "What is docstring?", options: ["Comment", "Function/class documentation", "README content", "Code note"], correct: 1 }, { question: "Why document code?", options: ["Required by Python", "Helps others understand", "Improves speed", "Required by law"], correct: 1 }, { question: "What is API documentation?", options: ["README file", "Description of API endpoints and usage", "Code comments", "User guide"], correct: 1 }, { question: "Can FastAPI auto-generate docs?", options: ["No", "Yes, via Swagger UI", "Only with extra tools", "Manual only"], correct: 1 }],
-  "4-6": [{ question: "What is cloud deployment?", options: ["Uploading files", "Running app on cloud provider servers", "Backup", "Data storage"], correct: 1 }, { question: "What are popular cloud platforms?", options: ["Only AWS", "AWS, Google Cloud, Azure, Heroku", "Only Heroku", "Only local servers"], correct: 1 }, { question: "What is scalability?", options: ["Code size", "App ability to handle increased load", "Server cost", "User count"], correct: 1 }, { question: "What is CI/CD?", options: ["Coding methods", "Continuous Integration/Deployment", "Cloud Interface", "Code standard"], correct: 1 }, { question: "What happens during deployment?", options: ["Testing", "Moving code to production server", "Backup", "Version control"], correct: 1 }]
+  "4-6": [{ question: "What is cloud deployment?", options: ["Uploading files", "Running app on cloud provider servers", "Backup", "Data storage"], correct: 1 }, { question: "What are popular cloud platforms?", options: ["Only AWS", "AWS, Google Cloud, Azure, Heroku", "Only Heroku", "Only local servers"], correct: 1 }, { question: "What is scalability?", options: ["Code size", "App ability to handle increased load", "Server cost", "User count"], correct: 1 }, { question: "What is CI/CD?", options: ["Coding methods", "Continuous Integration/Deployment", "Cloud Interface", "Code standard"], correct: 1 }, { question: "What happens during deployment?", options: ["Testing", "Moving code to production server", "Backup", "Version control"], correct: 1 }],
+  // NEW TOPICS
+  "2-7": [{ question: "What are type hints?", options: ["Comments", "Annotations showing expected types", "Variable names", "Function calls"], correct: 1 }, { question: "What does Pydantic do?", options: ["Parses HTML", "Validates data types automatically", "Manages databases", "Creates APIs"], correct: 1 }, { question: "What is a Pydantic BaseModel?", options: ["A template class", "Class for defining data models with validation", "A database table", "A function"], correct: 1 }, { question: "How do you define a type hint for a function return?", options: ["def func() int:", "def func() -> int:", "def func(): int", "def func() returns int:"], correct: 1 }, { question: "Why use type hints?", options: ["Required by Python", "Helps IDE support and catches bugs", "Improves speed", "Looks cool"], correct: 1 }],
+  "2-8": [{ question: "What does __init__.py do?", options: ["Initializes variables", "Marks folder as Python package", "Runs initialization code", "Creates instances"], correct: 1 }, { question: "What is a shallow import?", options: ["Quick import", "Importing from package root using __init__.py", "Importing one item", "Importing first item"], correct: 1 }, { question: "What is a deep import?", options: ["Slow import", "Importing specific file from nested folders", "Importing entire package", "Complex imports"], correct: 1 }, { question: "What is __all__ in __init__.py?", options: ["All variables", "Controls what gets imported with *", "All functions", "All classes"], correct: 1 }, { question: "Can __init__.py be empty?", options: ["No, must have code", "Yes, empty is valid", "Only in Python 3.9+", "Depends on OS"], correct: 1 }],
+  "3-7": [{ question: "What does LLM stand for?", options: ["Large Language Model", "Linear Learning Method", "Local Language Module", "Logic Learning Model"], correct: 0 }, { question: "What does SLM stand for?", options: ["Small Language Model", "Server Learning Method", "Specialized Logic Module", "Static Learning Model"], correct: 0 }, { question: "When should you use an SLM?", options: ["Always", "Never", "For local, budget-conscious, or specific tasks", "Only for testing"], correct: 2 }, { question: "What is a cost comparison between LLM API and local SLM?", options: ["Same cost", "LLM costs money, local is free", "Local costs more", "Depends on usage"], correct: 1 }, { question: "Which is faster: LLM API or local SLM?", options: ["LLM API always", "Local SLM usually", "Same speed", "Depends on model"], correct: 1 }],
+  "4-7": [{ question: "What are the 3 infrastructure options?", options: ["Local, cloud, backup", "Local, self-hosted, cloud", "Only cloud", "Only local"], correct: 1 }, { question: "When should you use local deployment?", options: ["Always", "For personal/development projects", "Never for production", "Only for testing"], correct: 1 }, { question: "What is a VPS?", options: ["Video Player Service", "Virtual Private Server", "Virtual Python Setup", "Verified Payment System"], correct: 1 }, { question: "What's an advantage of cloud?", options: ["Cheaper always", "Auto-scaling and high uptime", "Better security", "Easier to learn"], correct: 1 }, { question: "What does 'serverless' mean?", options: ["No servers exist", "Servers managed by provider, pay-per-use", "No internet needed", "Local execution only"], correct: 1 }]
 };
 
 const InteractiveLearningRoadmap = () => {
@@ -247,6 +286,8 @@ const InteractiveLearningRoadmap = () => {
     "2-3": true, // APIs
     "2-5": true, // Virtual Environments
     "2-6": true, // Git
+    "2-7": true, // Type Hints & Pydantic (NEW)
+    "2-8": true, // Package Organization (NEW)
     "3-0": true, // OpenAI & Anthropic APIs
     "3-1": true, // Prompt Engineering
     "3-2": true, // Structured Outputs
@@ -254,12 +295,14 @@ const InteractiveLearningRoadmap = () => {
     "3-4": true, // LangChain
     "3-5": true, // Vector Databases
     "3-6": true, // AI Agents
+    "3-7": true, // LLMs vs SLMs (NEW)
     "4-0": true, // FastAPI
     "4-1": true, // Streamlit
     "4-2": true, // Docker
     "4-3": true, // Environment Variables
     "4-5": true, // Documentation
     "4-6": true, // Cloud Deployment
+    "4-7": true, // Infrastructure: Cloud vs Local (NEW)
   };
 
   // Initialize Pyodide
@@ -1087,9 +1130,10 @@ mystdout.getvalue()
               padding: 28,
               marginBottom: 24,
             }}>
-              <div style={{ fontSize: 15, color: "#cbd5e1", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
-                {topic.instruction}
-              </div>
+              <div 
+                style={{ fontSize: 15, color: "#cbd5e1", lineHeight: 1.8 }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(topic.instruction) }}
+              />
             </div>
 
             {/* Resources */}

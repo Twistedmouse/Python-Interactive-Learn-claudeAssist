@@ -1,3 +1,6 @@
+// Import new topic
+import { infrastructureDecisions } from './infrastructureDecisions.js';
+
 export const phase4 = {
   id: 4,
   title: "Production & Deployment",
@@ -1379,7 +1382,8 @@ for platform, info in platforms.items():
         { name: "AWS Getting Started", url: "https://aws.amazon.com/getting-started/" }
       ],
       expectedOutput: "Cloud Deployment Platforms:\nRailway    - Free: Yes        | Ease: Very Easy  | railway.app\nRender     - Free: Yes        | Ease: Easy       | render.com\nHeroku     - Free: Limited    | Ease: Medium     | heroku.com\nAWS        - Free: Yes        | Ease: Hard       | aws.amazon.com"
-    }
+    },
+    infrastructureDecisions
   ],
   project: { title: "Full Stack AI App", desc: "Deploy a complete AI-powered application to production" }
 };
