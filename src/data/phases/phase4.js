@@ -1175,6 +1175,7 @@ for section, content in readme_sections.items():
       ],
       expectedOutput: "README Structure:\n- Title           -> # Project Name\n- Description     -> What does this do?\n- Installation    -> How to install\n- Usage           -> How to use\n- Examples        -> Real world examples\n- Contributing    -> How to contribute\n- License         -> License info"
     },
+    infrastructureDecisions,
     {
       name: "Cloud Deployment",
       brief: "Deploy applications to the cloud",
@@ -1382,8 +1383,7 @@ for platform, info in platforms.items():
         { name: "AWS Getting Started", url: "https://aws.amazon.com/getting-started/" }
       ],
       expectedOutput: "Cloud Deployment Platforms:\nRailway    - Free: Yes        | Ease: Very Easy  | railway.app\nRender     - Free: Yes        | Ease: Easy       | render.com\nHeroku     - Free: Limited    | Ease: Medium     | heroku.com\nAWS        - Free: Yes        | Ease: Hard       | aws.amazon.com"
-    },
-    infrastructureDecisions
+    }
   ],
   project: { title: "Full Stack AI App", desc: "Deploy a complete AI-powered application to production" }
 };
