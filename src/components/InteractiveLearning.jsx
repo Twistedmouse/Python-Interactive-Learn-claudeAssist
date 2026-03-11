@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { phases } from '../data/phases/index.js';
 
 // Markdown rendering
@@ -279,6 +279,9 @@ const InteractiveLearningRoadmap = () => {
   const [quizScore, setQuizScore] = useState(null);
   const [quizAttempts, setQuizAttempts] = useState({});
 
+  // Ref for instructions panel auto-scroll
+  const instructionsPanelRef = useRef(null);
+
   // Hybrid Learning Topics - These need browser + local practice
   const hybridTopics = {
     "1-4": true, // File I/O
@@ -326,6 +329,13 @@ const InteractiveLearningRoadmap = () => {
     
     initPyodide();
   }, []);
+
+  // Auto-scroll instructions panel to top when topic or view changes
+  useEffect(() => {
+    if (instructionsPanelRef.current && view === "tutorial") {
+      instructionsPanelRef.current.scrollTop = 0;
+    }
+  }, [activeTopicIdx, view]);
 
   const executePythonCode = async (code) => {
     if (!pyodideReady || !window.pyodide) {
@@ -511,6 +521,8 @@ mystdout.getvalue()
           setActiveTopicIdx(activeTopicIdx + 1);
           setUserCode("");
           setTerminalOutput("✅ Python ready!\n$ Ready for next lesson...");
+          // Scroll to top to show new topic
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }, 1500);
     } else {
@@ -562,7 +574,10 @@ mystdout.getvalue()
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setView(tab.id)}
+              onClick={() => {
+                setView(tab.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               style={{
                 background: view === tab.id ? "#00d4aa" : "rgba(100, 116, 139, 0.2)",
                 color: view === tab.id ? "#0f172a" : "#cbd5e1",
@@ -598,6 +613,7 @@ mystdout.getvalue()
                 onClick={() => {
                   setActivePhaseIdx(idx);
                   setView("phase-detail");
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 style={{
                   background: "rgba(30, 45, 69, 0.3)",
@@ -644,7 +660,10 @@ mystdout.getvalue()
       {view === "phase-detail" && (
         <div style={{ padding: "40px", maxWidth: 1200, margin: "0 auto" }}>
           <button
-            onClick={() => setView("roadmap")}
+            onClick={() => {
+              setView("roadmap");
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             style={{
               background: "rgba(100, 116, 139, 0.2)",
               color: "#cbd5e1",
@@ -700,6 +719,7 @@ mystdout.getvalue()
                   onClick={() => {
                     setActiveTopicIdx(i);
                     setView("tutorial");
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   style={{
                     background: isCompleted ? "rgba(0, 212, 170, 0.08)" : "rgba(30, 45, 69, 0.4)",
@@ -1071,13 +1091,18 @@ mystdout.getvalue()
           )}
 
           {/* LEFT: INSTRUCTIONS */}
-          <div style={{
+          <div 
+            ref={instructionsPanelRef}
+            style={{
             maxHeight: "calc(100vh - 140px)",
             overflowY: "auto",
             paddingRight: 24,
           }} className="instructions-scrollbar">
             <button
-              onClick={() => setView("phase-detail")}
+              onClick={() => {
+                setView("phase-detail");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               style={{
                 background: "rgba(100, 116, 139, 0.2)",
                 color: "#cbd5e1",
@@ -1357,6 +1382,7 @@ mystdout.getvalue()
                     setActiveTopicIdx(activeTopicIdx - 1);
                     setUserCode("");
                     setTerminalOutput("✅ Python ready!\n$ Ready for previous lesson...");
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}
                 disabled={activeTopicIdx === 0}
@@ -1381,6 +1407,7 @@ mystdout.getvalue()
                     setActiveTopicIdx(activeTopicIdx + 1);
                     setUserCode("");
                     setTerminalOutput("✅ Python ready!\n$ Ready for next lesson...");
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}
                 disabled={activeTopicIdx === phase.topics.length - 1}
@@ -1431,6 +1458,7 @@ mystdout.getvalue()
                           setActivePhaseIdx(phase.id - 1);
                           setActiveTopicIdx(idx);
                           setView("tutorial");
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         style={{
                           background: "rgba(30, 45, 69, 0.3)",
