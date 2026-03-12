@@ -487,18 +487,6 @@ mystdout.getvalue()
     return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get date group (Today, Yesterday, This Week, etc.)
-  const getDateGroup = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / 86400000);
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return "This Week";
-    if (diffDays < 30) return "This Month";
-    return "Older";
-  };
 
   // Rename attempt
   const renameAttempt = (attemptId, newName) => {
