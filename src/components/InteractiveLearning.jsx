@@ -520,11 +520,6 @@ mystdout.getvalue()
     }
   };
 
-  // Delete individual attempt - show confirmation first
-  const deleteAttempt = (attemptId, attemptName) => {
-    setDeleteConfirm({ attemptId, attemptName });
-  };
-
   // Confirm and actually delete
   const confirmDelete = () => {
     if (!deleteConfirm) return;
@@ -1116,7 +1111,7 @@ mystdout.getvalue()
                                 width: 26,
                                 height: 26,
                                 cursor: "pointer",
-                                fontSize: 18,
+                                fontSize: 14,
                                 padding: 0,
                                 display: "flex",
                                 alignItems: "center",
