@@ -303,6 +303,8 @@ const InteractiveLearningRoadmap = () => {
 
   const [sortBy, setSortBy] = useState("date-desc"); // date-asc, date-desc, name, favorites
   const [expandedAttempts, setExpandedAttempts] = useState({});
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { attemptId, attemptName }
+  const [notification, setNotification] = useState(null); // { message, type }
 
   // Hybrid Learning Topics - These need browser + local practice
   const hybridTopics = {
@@ -518,28 +520,40 @@ mystdout.getvalue()
     }
   };
 
-  // Delete individual attempt
-  const deleteAttempt = (attemptId) => {
+  // Delete individual attempt - show confirmation first
+  const deleteAttempt = (attemptId, attemptName) => {
+    setDeleteConfirm({ attemptId, attemptName });
+  };
+
+  // Confirm and actually delete
+  const confirmDelete = () => {
+    if (!deleteConfirm) return;
+    
     const topicKey = `${phase.id}-${activeTopicIdx}`;
     const updated = {
       ...codeSnippets,
-      [topicKey]: codeSnippets[topicKey].filter(s => s.id !== attemptId)
+      [topicKey]: codeSnippets[topicKey].filter(s => s.id !== deleteConfirm.attemptId)
     };
     setCodeSnippets(updated);
     try {
       localStorage.setItem("learning_code_snippets", JSON.stringify(updated));
-      setTerminalOutput("✅ Attempt deleted!");
+      setNotification({ message: "✅ Attempt deleted!", type: "success" });
+      setTimeout(() => setNotification(null), 2000);
     } catch (error) {
-      setTerminalOutput("❌ Error deleting attempt");
+      setNotification({ message: "❌ Error deleting attempt", type: "error" });
+      setTimeout(() => setNotification(null), 2000);
     }
+    setDeleteConfirm(null);
   };
 
   // Copy code to clipboard
   const copyToClipboard = (code) => {
     navigator.clipboard.writeText(code).then(() => {
-      setTerminalOutput("✅ Code copied to clipboard!");
+      setNotification({ message: "✅ Copied to clipboard!", type: "success" });
+      setTimeout(() => setNotification(null), 2000);
     }).catch(() => {
-      setTerminalOutput("❌ Failed to copy code");
+      setNotification({ message: "❌ Failed to copy", type: "error" });
+      setTimeout(() => setNotification(null), 2000);
     });
   };
 
@@ -673,6 +687,26 @@ mystdout.getvalue()
       padding: 0,
       margin: 0,
     }}>
+      {/* NOTIFICATION TOAST */}
+      {notification && (
+        <div style={{
+          position: "fixed",
+          top: 20,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: notification.type === "success" ? "rgba(16, 185, 129, 0.95)" : "rgba(239, 68, 68, 0.95)",
+          color: "#fff",
+          padding: "14px 28px",
+          borderRadius: 8,
+          zIndex: 2000,
+          fontSize: 14,
+          fontWeight: 600,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+        }}>
+          {notification.message}
+        </div>
+      )}
+
       {/* HEADER */}
       <div style={{
         background: "rgba(15, 23, 42, 0.8)",
@@ -1150,7 +1184,10 @@ mystdout.getvalue()
                               </button>
 
                               <button
-                                onClick={() => deleteAttempt(attemptId)}
+                                onClick={() => {
+                                  console.log("Delete clicked", attemptId, attemptName);
+                                  setDeleteConfirm({ attemptId, attemptName });
+                                }}
                                 title="Delete this attempt"
                                 style={{
                                   background: "rgba(239, 68, 68, 0.2)",
@@ -1240,6 +1277,72 @@ mystdout.getvalue()
                       })}
                     </div>
                   </>
+                )}
+
+                {/* DELETE CONFIRMATION MODAL - Inside Attempts Modal */}
+                {deleteConfirm && (
+                  <div style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: "rgba(0, 0, 0, 0.7)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1100,
+                  }}>
+                    <div style={{
+                      background: "rgba(15, 23, 42, 0.95)",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      borderRadius: 14,
+                      padding: 32,
+                      maxWidth: 400,
+                      zIndex: 1100,
+                    }}>
+                      <h3 style={{ margin: "0 0 16px 0", fontSize: 20, fontWeight: 700, color: "#fca5a5" }}>
+                        🗑️ Delete Attempt?
+                      </h3>
+                      <p style={{ margin: "0 0 20px 0", color: "#cbd5e1", fontSize: 15 }}>
+                        Are you sure you want to delete <strong>"{deleteConfirm.attemptName}"</strong>? This action cannot be undone.
+                      </p>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button
+                          onClick={() => setDeleteConfirm(null)}
+                          style={{
+                            flex: 1,
+                            background: "rgba(100, 116, 139, 0.2)",
+                            color: "#cbd5e1",
+                            border: "1px solid rgba(100, 116, 139, 0.3)",
+                            borderRadius: 8,
+                            padding: "12px 20px",
+                            cursor: "pointer",
+                            fontSize: 14,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={confirmDelete}
+                          style={{
+                            flex: 1,
+                            background: "rgba(239, 68, 68, 0.3)",
+                            color: "#fca5a5",
+                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                            borderRadius: 8,
+                            padding: "12px 20px",
+                            cursor: "pointer",
+                            fontSize: 14,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
