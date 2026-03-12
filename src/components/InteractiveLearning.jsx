@@ -282,6 +282,28 @@ const InteractiveLearningRoadmap = () => {
   // Ref for instructions panel auto-scroll
   const instructionsPanelRef = useRef(null);
 
+  // Attempt management state
+  const [attemptNames, setAttemptNames] = useState(() => {
+    try {
+      const saved = localStorage.getItem("learning_attempt_names");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [favoriteAttempts, setFavoriteAttempts] = useState(() => {
+    try {
+      const saved = localStorage.getItem("learning_favorite_attempts");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [sortBy, setSortBy] = useState("date-desc"); // date-asc, date-desc, name, favorites
+  const [expandedAttempts, setExpandedAttempts] = useState({});
+
   // Hybrid Learning Topics - These need browser + local practice
   const hybridTopics = {
     "1-4": true, // File I/O
@@ -446,6 +468,128 @@ mystdout.getvalue()
     setUserCode(snippet.code);
     setTerminalOutput("✅ Loaded previous attempt!");
     setShowPrevious(false);
+  };
+
+  // Format timestamp to human-readable format
+  const formatAttemptTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Get date group (Today, Yesterday, This Week, etc.)
+  const getDateGroup = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / 86400000);
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return "This Week";
+    if (diffDays < 30) return "This Month";
+    return "Older";
+  };
+
+  // Rename attempt
+  const renameAttempt = (attemptId, newName) => {
+    const newNames = {
+      ...attemptNames,
+      [attemptId]: newName
+    };
+    setAttemptNames(newNames);
+    try {
+      localStorage.setItem("learning_attempt_names", JSON.stringify(newNames));
+    } catch (error) {
+      console.error("Error saving attempt name");
+    }
+  };
+
+  // Toggle favorite
+  const toggleFavorite = (attemptId) => {
+    const newFavorites = { ...favoriteAttempts };
+    if (newFavorites[attemptId]) {
+      delete newFavorites[attemptId];
+    } else {
+      newFavorites[attemptId] = true;
+    }
+    setFavoriteAttempts(newFavorites);
+    try {
+      localStorage.setItem("learning_favorite_attempts", JSON.stringify(newFavorites));
+    } catch (error) {
+      console.error("Error saving favorite");
+    }
+  };
+
+  // Delete individual attempt
+  const deleteAttempt = (attemptId) => {
+    const topicKey = `${phase.id}-${activeTopicIdx}`;
+    const updated = {
+      ...codeSnippets,
+      [topicKey]: codeSnippets[topicKey].filter(s => s.id !== attemptId)
+    };
+    setCodeSnippets(updated);
+    try {
+      localStorage.setItem("learning_code_snippets", JSON.stringify(updated));
+      setTerminalOutput("✅ Attempt deleted!");
+    } catch (error) {
+      setTerminalOutput("❌ Error deleting attempt");
+    }
+  };
+
+  // Copy code to clipboard
+  const copyToClipboard = (code) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setTerminalOutput("✅ Code copied to clipboard!");
+    }).catch(() => {
+      setTerminalOutput("❌ Failed to copy code");
+    });
+  };
+
+  // Export attempt as .py file
+  const exportAttempt = (code, attemptName) => {
+    const element = document.createElement("a");
+    const file = new Blob([code], { type: "text/plain" });
+    element.href = URL.createObjectURL(file);
+    element.download = `${attemptName || "attempt"}.py`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  // Sort attempts
+  const getSortedAttempts = (attempts) => {
+    const sorted = [...attempts];
+    
+    switch (sortBy) {
+      case "date-asc":
+        return sorted.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+      case "date-desc":
+        return sorted.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+      case "name":
+        return sorted.sort((a, b) => {
+          const nameA = attemptNames[a.id] || `Attempt ${a.id}`;
+          const nameB = attemptNames[b.id] || `Attempt ${b.id}`;
+          return nameA.localeCompare(nameB);
+        });
+      case "favorites":
+        return sorted.sort((a, b) => {
+          const favA = favoriteAttempts[a.id] ? 1 : 0;
+          const favB = favoriteAttempts[b.id] ? 1 : 0;
+          return favB - favA;
+        });
+      default:
+        return sorted;
+    }
   };
 
   const totalTopicsCompleted = Object.keys(completedTopics).length;
@@ -828,12 +972,14 @@ mystdout.getvalue()
                 border: "1px solid rgba(100, 116, 139, 0.3)",
                 borderRadius: 14,
                 padding: 32,
-                maxWidth: 600,
-                maxHeight: "80vh",
+                maxWidth: 700,
+                maxHeight: "85vh",
                 overflowY: "auto",
+                width: "90%",
               }}>
+                {/* Header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>📝 Previous Attempts ({previousAttempts.length})</h3>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>📝 Saved Attempts ({previousAttempts.length})</h3>
                   <button
                     onClick={() => setShowPrevious(false)}
                     style={{
@@ -855,64 +1001,257 @@ mystdout.getvalue()
                     <p style={{ margin: 0 }}>No saved attempts yet. Write some code and click "Save Attempt"!</p>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {previousAttempts.map((snippet, idx) => (
-                      <div
-                        key={snippet.id}
+                  <>
+                    {/* Controls */}
+                    <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
+                      <button
+                        onClick={() => {
+                          const allIds = previousAttempts.map(a => a.id);
+                          const allExpanded = allIds.every(id => expandedAttempts[id]);
+                          
+                          if (allExpanded) {
+                            // All expanded, collapse all
+                            setExpandedAttempts({});
+                          } else {
+                            // Not all expanded, expand all
+                            const newExpanded = {};
+                            allIds.forEach(id => {
+                              newExpanded[id] = true;
+                            });
+                            setExpandedAttempts(newExpanded);
+                          }
+                        }}
                         style={{
-                          background: "rgba(30, 45, 69, 0.3)",
-                          border: "1px solid rgba(100, 116, 139, 0.2)",
-                          borderRadius: 10,
-                          padding: 16,
+                          background: Object.keys(expandedAttempts).length === previousAttempts.length 
+                            ? "rgba(100, 116, 139, 0.2)" 
+                            : "rgba(0, 212, 170, 0.2)",
+                          color: Object.keys(expandedAttempts).length === previousAttempts.length 
+                            ? "#cbd5e1" 
+                            : "#00d4aa",
+                          border: "1px solid " + (Object.keys(expandedAttempts).length === previousAttempts.length 
+                            ? "rgba(100, 116, 139, 0.2)" 
+                            : "rgba(0, 212, 170, 0.3)"),
+                          borderRadius: 6,
+                          padding: "8px 12px",
+                          cursor: "pointer",
+                          fontSize: 12,
+                          fontWeight: 600,
                         }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 12 }}>
-                          <div>
-                            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 4 }}>Attempt #{previousAttempts.length - idx}</div>
-                            <div style={{ fontSize: 12, color: "#94a3b8" }}>Saved: {snippet.timestamp}</div>
-                          </div>
-                        </div>
+                        {Object.keys(expandedAttempts).length === previousAttempts.length ? "📁 Collapse All" : "📂 Expand All"}
+                      </button>
 
-                        <div style={{
-                          background: "#0f172a",
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        style={{
+                          background: "rgba(30, 45, 69, 0.5)",
+                          color: "#cbd5e1",
                           border: "1px solid rgba(100, 116, 139, 0.2)",
-                          borderRadius: 8,
-                          padding: 12,
-                          marginBottom: 12,
-                          maxHeight: 150,
-                          overflowY: "auto",
-                        }}>
-                          <code style={{
-                            color: "#00d4aa",
-                            fontFamily: "monospace",
-                            fontSize: 12,
-                            lineHeight: 1.6,
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                          }}>
-                            {snippet.code}
-                          </code>
-                        </div>
+                          borderRadius: 6,
+                          padding: "8px 12px",
+                          cursor: "pointer",
+                          fontSize: 12,
+                        }}
+                      >
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="favorites">Favorites First</option>
+                        <option value="name">By Name</option>
+                      </select>
+                    </div>
 
-                        <button
-                          onClick={() => loadSnippet(snippet)}
-                          style={{
-                            background: "linear-gradient(135deg, #00d4aa, #00b896)",
-                            color: "#0f172a",
-                            border: "none",
-                            borderRadius: 8,
-                            padding: "10px 16px",
-                            cursor: "pointer",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            width: "100%",
-                          }}
-                        >
-                          ↻ Load This Attempt
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                    {/* Grouped/Sorted Attempts */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {getSortedAttempts(previousAttempts).map((snippet, idx) => {
+                        const attemptId = snippet.id;
+                        const isFavorite = favoriteAttempts[attemptId];
+                        const attemptName = attemptNames[attemptId] || `Attempt ${previousAttempts.length - idx}`;
+                        const isExpanded = expandedAttempts[attemptId];
+
+                        return (
+                          <div
+                            key={snippet.id}
+                            style={{
+                              background: isFavorite ? "rgba(0, 212, 170, 0.08)" : "rgba(30, 45, 69, 0.3)",
+                              border: "1px solid " + (isFavorite ? "rgba(0, 212, 170, 0.3)" : "rgba(100, 116, 139, 0.2)"),
+                              borderRadius: 10,
+                              padding: 16,
+                              position: "relative",
+                            }}
+                          >
+                            {/* Favorite Badge - Top Right Corner */}
+                            <button
+                              onClick={() => toggleFavorite(attemptId)}
+                              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                              style={{
+                                position: "absolute",
+                                top: -4,
+                                right: -4,
+                                background: isFavorite ? "linear-gradient(135deg, #00d4aa, #00b896)" : "rgba(100, 116, 139, 0.3)",
+                                border: "1px solid #0f172a",
+                                borderRadius: "50%",
+                                width: 26,
+                                height: 26,
+                                cursor: "pointer",
+                                fontSize: 18,
+                                padding: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                lineHeight: 1,
+                                color: isFavorite ? "#ffd700" : "#e2e8f0",
+                                zIndex: 10,
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              ★
+                            </button>
+
+                            {/* Action Buttons - ABOVE Name */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+                              <button
+                                onClick={() => loadSnippet(snippet)}
+                                title="Load this code"
+                                style={{
+                                  background: "linear-gradient(135deg, #00d4aa, #00b896)",
+                                  color: "#0f172a",
+                                  border: "none",
+                                  borderRadius: 6,
+                                  padding: "6px 8px",
+                                  cursor: "pointer",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                ↻ Load
+                              </button>
+
+                              <button
+                                onClick={() => copyToClipboard(snippet.code)}
+                                title="Copy to clipboard"
+                                style={{
+                                  background: "rgba(59, 130, 246, 0.2)",
+                                  color: "#cbd5e1",
+                                  border: "1px solid rgba(59, 130, 246, 0.3)",
+                                  borderRadius: 6,
+                                  padding: "6px 8px",
+                                  cursor: "pointer",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                📋 Copy
+                              </button>
+
+                              <button
+                                onClick={() => exportAttempt(snippet.code, attemptName)}
+                                title="Export as .py file"
+                                style={{
+                                  background: "rgba(168, 85, 247, 0.2)",
+                                  color: "#cbd5e1",
+                                  border: "1px solid rgba(168, 85, 247, 0.3)",
+                                  borderRadius: 6,
+                                  padding: "6px 8px",
+                                  cursor: "pointer",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                ⬇️ Export
+                              </button>
+
+                              <button
+                                onClick={() => deleteAttempt(attemptId)}
+                                title="Delete this attempt"
+                                style={{
+                                  background: "rgba(239, 68, 68, 0.2)",
+                                  color: "#fca5a5",
+                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  borderRadius: 6,
+                                  padding: "6px 8px",
+                                  cursor: "pointer",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+
+                            {/* Attempt Header with Name and Favorite */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 12, gap: 12 }}>
+                              <div style={{ flex: 1 }}>
+                                <input
+                                  type="text"
+                                  value={attemptName}
+                                  onChange={(e) => renameAttempt(attemptId, e.target.value)}
+                                  style={{
+                                    background: "rgba(15, 23, 42, 0.5)",
+                                    color: "#00d4aa",
+                                    border: "1px solid rgba(100, 116, 139, 0.2)",
+                                    borderRadius: 6,
+                                    padding: "8px 10px",
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    width: "100%",
+                                    marginBottom: 4,
+                                  }}
+                                  placeholder="Name this attempt..."
+                                />
+                                <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                                  {formatAttemptTime(snippet.timestamp)}
+                                </div>
+                              </div>
+
+                              {/* Expand/Collapse Button Only */}
+                              <button
+                                onClick={() => setExpandedAttempts({
+                                  ...expandedAttempts,
+                                  [attemptId]: !isExpanded
+                                })}
+                                title={isExpanded ? "Collapse" : "Expand"}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  fontSize: 14,
+                                  cursor: "pointer",
+                                  padding: 4,
+                                  color: "#cbd5e1",
+                                }}
+                              >
+                                {isExpanded ? "▼" : "▶"}
+                              </button>
+                            </div>
+
+                            {/* Code Preview (Collapsed or Expanded) */}
+                            {isExpanded && (
+                              <div style={{
+                                background: "#0f172a",
+                                border: "1px solid rgba(100, 116, 139, 0.2)",
+                                borderRadius: 8,
+                                padding: 12,
+                                marginBottom: 12,
+                                maxHeight: 200,
+                                overflowY: "auto",
+                              }}>
+                                <code style={{
+                                  color: "#00d4aa",
+                                  fontFamily: "monospace",
+                                  fontSize: 12,
+                                  lineHeight: 1.6,
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                }}>
+                                  {snippet.code}
+                                </code>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -1267,7 +1606,7 @@ mystdout.getvalue()
                   disabled={previousAttempts.length === 0}
                   title={previousAttempts.length === 0 ? "Save some code first!" : "View previous attempts"}
                 >
-                  📝 Previous ({previousAttempts.length})
+                  📝 Attempts ({previousAttempts.length})
                 </button>
               </div>
               <textarea
