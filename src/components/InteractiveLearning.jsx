@@ -438,7 +438,8 @@ mystdout.getvalue()
 
   const saveCodeSnippet = () => {
     if (!userCode.trim()) {
-      setTerminalOutput("❌ Code is empty! Write something first.");
+      setNotification({ message: "❌ Code is empty! Write something first.", type: "error" });
+      setTimeout(() => setNotification(null), 2000);
       return;
     }
 
@@ -460,9 +461,11 @@ mystdout.getvalue()
     setCodeSnippets(newSnippets);
     try {
       localStorage.setItem("learning_code_snippets", JSON.stringify(newSnippets));
-      setTerminalOutput(`✅ Code saved! (${newSnippets[topicKey].length} attempts)`);
+      setNotification({ message: `✅ Attempt saved! (${newSnippets[topicKey].length} total)`, type: "success" });
+      setTimeout(() => setNotification(null), 2000);
     } catch (error) {
-      setTerminalOutput("❌ Error saving code");
+      setNotification({ message: "❌ Error saving code", type: "error" });
+      setTimeout(() => setNotification(null), 2000);
     }
   };
 
